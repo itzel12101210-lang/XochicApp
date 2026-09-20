@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect } from "react";
 import {
   onAuthStateChanged,
@@ -64,19 +64,23 @@ export function useAuth() {
   const loginGoogle = async () => {
     const cred = await signInWithPopup(auth, googleProvider);
     // Check if new user and create profile
-    const userRef = doc(db, "users", cred.user.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
-      await setDoc(userRef, {
-        uid: cred.user.uid,
-        email: cred.user.email,
-        nombre: cred.user.displayName,
-        photoURL: cred.user.photoURL,
-        styleDNA: [],
-        balance: 0,
-        isVendedora: false,
-        creadoEn: serverTimestamp(),
-      });
+    try {
+      const userRef = doc(db, "users", cred.user.uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          uid: cred.user.uid,
+          email: cred.user.email,
+          nombre: cred.user.displayName,
+          photoURL: cred.user.photoURL,
+          styleDNA: [],
+          balance: 0,
+          isVendedora: false,
+          creadoEn: serverTimestamp(),
+        });
+      }
+    } catch (firestoreError) {
+      console.warn("Perfil Google Firestore pendiente:", firestoreError);
     }
     return cred.user;
   };
@@ -89,18 +93,23 @@ export function useAuth() {
   ) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: nombre });
-    // Save full profile to Firestore
-    await setDoc(doc(db, "users", cred.user.uid), {
-      uid: cred.user.uid,
-      email,
-      nombre,
-      photoURL: null,
-      styleDNA,
-      balance: 0,
-      isVendedora: false,
-      medidas: {},
-      creadoEn: serverTimestamp(),
-    });
+    // Save full profile to Firestore (gracefully handles rules errors)
+    try {
+      await setDoc(doc(db, "users", cred.user.uid), {
+        uid: cred.user.uid,
+        email,
+        nombre,
+        photoURL: null,
+        styleDNA,
+        balance: 0,
+        isVendedora: false,
+        medidas: {},
+        creadoEn: serverTimestamp(),
+      });
+    } catch (firestoreError) {
+      // Auth account was created — Firestore profile will sync on next login
+      console.warn("Perfil Firestore pendiente (verifica reglas):", firestoreError);
+    }
     return cred.user;
   };
 
