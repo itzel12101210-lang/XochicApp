@@ -1,153 +1,246 @@
 ﻿"use client";
-import { useState } from "react";
-import { IconCamera, IconTag, IconRuler, IconPackage, IconCheck } from "@tabler/icons-react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { IconCamera, IconTag, IconRuler, IconPackage, IconCheck, IconX, IconLoader2 } from "@tabler/icons-react";
+import { useAuth } from "@/hooks/useAuth";
+import { uploadImage }  from "@/lib/cloudinary";
+import { crearPrenda }  from "@/lib/prendas";
+import Image from "next/image";
 
-const CATEGORIAS = ["Tops", "Bottoms", "Vestidos", "Abrigos", "Zapatos", "Accesorios", "Novia / XV", "Graduacion"];
-const ESTILOS = ["Cottagecore", "Minimal", "Boho", "Artesanal MX", "Dark Academia", "Y2K", "Streetwear", "Vintage"];
-const ESTADOS = ["Nueva con etiqueta", "Nueva sin etiqueta", "Como nuevo", "Buen estado", "Tiene detalles"];
-const TALLAS = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "Talla unica", "24", "25", "26", "27", "28", "29", "30", "31", "32"];
+const CATEGORIAS = ["Tops","Bottoms","Vestidos","Abrigos","Zapatos","Accesorios","Novia / XV","Graduacion"];
+const ESTILOS    = ["Cottagecore","Minimal","Boho","Artesanal MX","Dark Academia","Y2K","Streetwear","Vintage"];
+const ESTADOS    = ["Nueva con etiqueta","Nueva sin etiqueta","Como nuevo","Buen estado","Tiene detalles"];
+const TALLAS     = ["XXS","XS","S","M","L","XL","XXL","Unica","24","25","26","27","28","29","30","31","32"];
 
 export default function VenderPage() {
-  const [precio, setPrecio] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [estilo, setEstilo] = useState("");
-  const [estado, setEstado] = useState("");
-  const [talla, setTalla] = useState("");
-  const [titulo, setTitulo] = useState("");
+  const router          = useRouter();
+  const { user }        = useAuth();
+  const fileRef         = useRef<HTMLInputElement>(null);
+
+  const [titulo,     setTitulo]     = useState("");
+  const [desc,       setDesc]       = useState("");
+  const [precio,     setPrecio]     = useState("");
+  const [categoria,  setCategoria]  = useState("");
+  const [estilos,    setEstilos]    = useState<string[]>([]);
+  const [estado,     setEstado]     = useState("");
+  const [talla,      setTalla]      = useState("");
+  const [imagenes,   setImagenes]   = useState<{ file: File; preview: string }[]>([]);
+  const [uploading,  setUploading]  = useState(false);
+  const [published,  setPublished]  = useState(false);
+  const [error,      setError]      = useState("");
 
   const comision = precio ? Math.round(Number(precio) * 0.09) : 0;
-  const recibes = precio ? Number(precio) - comision : 0;
+  const recibes  = precio ? Number(precio) - comision : 0;
 
-  const inputStyle = {
-    background: "var(--input)", border: "1.5px solid var(--border)",
-    color: "var(--foreground)", outline: "none", borderRadius: 12,
-    padding: "10px 14px", width: "100%", fontSize: "0.875rem"
+  const toggleEstilo = (e: string) =>
+    setEstilos(prev => prev.includes(e) ? prev.filter(x => x !== e) : prev.length < 2 ? [...prev, e] : prev);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files).slice(0, 8 - imagenes.length);
+    const newImgs = arr.map(file => ({ file, preview: URL.createObjectURL(file) }));
+    setImagenes(prev => [...prev, ...newImgs]);
   };
 
+  const removeImage = (i: number) => {
+    URL.revokeObjectURL(imagenes[i].preview);
+    setImagenes(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  const handlePublish = async () => {
+    if (!titulo || !precio || !categoria || !estado || !talla) {
+      setError("Completa todos los campos obligatorios."); return;
+    }
+    if (!user) { setError("Debes iniciar sesion."); return; }
+    setError(""); setUploading(true);
+    try {
+      // 1. Subir imagenes a Cloudinary
+      const uploaded = await Promise.all(
+        imagenes.map(img => uploadImage(img.file, "xochic/prendas"))
+      );
+      const urls = uploaded.map(u => u.secure_url);
+      const ids  = uploaded.map(u => u.public_id);
+
+      // 2. Guardar prenda en Firestore
+      await crearPrenda({
+        titulo, descripcion: desc, precio: Number(precio),
+        talla, categoria, estilos, estado,
+        imagenes: urls, imagenesIds: ids,
+        medidas: {},
+        vendedoraId:     user.uid,
+        vendedoraNombre: user.nombre ?? "Vendedora",
+        vendedoraFoto:   user.photoURL ?? undefined,
+      });
+
+      setPublished(true);
+      setTimeout(() => router.push("/explorar"), 1800);
+    } catch (e: any) {
+      setError(e.message ?? "Error al publicar. Intenta de nuevo.");
+    } finally { setUploading(false); }
+  };
+
+  const chip = (active: boolean, color?: string) => ({
+    background: active ? (color ? color + "33" : "var(--primary)") : "var(--muted)",
+    color:      active ? (color ? color       : "white")           : "var(--muted-foreground)",
+    border:     active ? `1.5px solid ${color ?? "var(--primary)"}` : "1.5px solid transparent",
+    borderRadius: 999, padding: "6px 14px", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+  } as React.CSSProperties);
+
+  if (published) return (
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "var(--success-light)" }}>
+        <IconCheck size={40} style={{ color: "var(--success)" }} />
+      </div>
+      <h2 className="text-xl font-bold" style={{ color: "var(--foreground)" }}>Prenda publicada</h2>
+      <p className="text-sm text-center" style={{ color: "var(--muted-foreground)" }}>
+        Ya esta visible en el marketplace. Te notificaremos cuando alguien la compre.
+      </p>
+    </div>
+  );
+
   return (
-    <div className="px-4 pb-6 mt-2">
+    <div className="px-4 pb-8 mt-2">
       <h2 className="text-xl font-bold mb-1" style={{ color: "var(--foreground)" }}>Publicar prenda</h2>
-      <p className="text-sm mb-5" style={{ color: "var(--muted-foreground)" }}>Comision Xochic: solo 9%</p>
+      <p className="text-sm mb-5" style={{ color: "var(--muted-foreground)" }}>Comision Xochic: solo 9% — una de las mas bajas del mercado</p>
 
-      {/* Photo upload */}
-      <div className="rounded-2xl flex flex-col items-center justify-center gap-2 mb-5 cursor-pointer"
-        style={{ height: 180, border: "2px dashed var(--primary)", background: "var(--muted)" }}>
-        <IconCamera size={36} style={{ color: "var(--primary)" }} />
-        <p className="text-sm font-medium" style={{ color: "var(--primary)" }}>Agregar fotos</p>
-        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Minimo 1, maximo 8 fotos</p>
+      {error && (
+        <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: "var(--error-light)", color: "var(--error)" }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── Fotos ── */}
+      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+        onChange={e => handleFiles(e.target.files)} />
+
+      <div className="grid grid-cols-4 gap-2 mb-5">
+        {imagenes.map((img, i) => (
+          <div key={i} className="relative rounded-xl overflow-hidden" style={{ aspectRatio: "1" }}>
+            <Image src={img.preview} alt="" fill style={{ objectFit: "cover" }} />
+            <button onClick={() => removeImage(i)}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(0,0,0,0.6)" }}>
+              <IconX size={12} color="white" />
+            </button>
+          </div>
+        ))}
+        {imagenes.length < 8 && (
+          <button onClick={() => fileRef.current?.click()}
+            className="rounded-xl flex flex-col items-center justify-center gap-1"
+            style={{ aspectRatio: "1", border: "2px dashed var(--primary)", background: "var(--muted)" }}>
+            <IconCamera size={22} style={{ color: "var(--primary)" }} />
+            <span className="text-xs" style={{ color: "var(--primary)" }}>
+              {imagenes.length === 0 ? "Agregar fotos" : "+"}
+            </span>
+          </button>
+        )}
       </div>
 
-      {/* Titulo */}
+      {/* ── Titulo ── */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Titulo</label>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Titulo *</label>
         <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)}
-          placeholder="ej. Blusa floral boho talla M" style={inputStyle as React.CSSProperties} />
+          placeholder="ej. Blusa floral boho talla M"
+          className="w-full px-4 py-3 rounded-xl text-sm"
+          style={{ background: "var(--input)", border: "1.5px solid var(--border)", color: "var(--foreground)", outline: "none" }} />
       </div>
 
-      {/* Precio */}
+      {/* ── Descripcion ── */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Precio (MXN)</label>
-        <input type="number" value={precio} onChange={e => setPrecio(e.target.value)}
-          placeholder="0" style={inputStyle as React.CSSProperties} />
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Descripcion</label>
+        <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={3}
+          placeholder="Marca, materiales, detalles importantes..."
+          className="w-full px-4 py-3 rounded-xl text-sm resize-none"
+          style={{ background: "var(--input)", border: "1.5px solid var(--border)", color: "var(--foreground)", outline: "none" }} />
+      </div>
+
+      {/* ── Precio ── */}
+      <div className="mb-4">
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Precio MXN *</label>
+        <input type="number" value={precio} onChange={e => setPrecio(e.target.value)} placeholder="0"
+          className="w-full px-4 py-3 rounded-xl text-sm"
+          style={{ background: "var(--input)", border: "1.5px solid var(--border)", color: "var(--foreground)", outline: "none" }} />
         {precio && (
-          <div className="mt-2 p-3 rounded-xl" style={{ background: "var(--muted)" }}>
-            <div className="flex justify-between text-xs mb-1">
+          <div className="mt-2 p-3 rounded-xl space-y-1" style={{ background: "var(--muted)" }}>
+            <div className="flex justify-between text-xs">
               <span style={{ color: "var(--muted-foreground)" }}>Precio de venta</span>
-              <span style={{ color: "var(--foreground)" }}>${Number(precio).toLocaleString()}</span>
+              <span style={{ color: "var(--foreground)" }}>${Number(precio).toLocaleString()} MXN</span>
             </div>
-            <div className="flex justify-between text-xs mb-1">
+            <div className="flex justify-between text-xs">
               <span style={{ color: "var(--muted-foreground)" }}>Comision Xochic (9%)</span>
-              <span style={{ color: "var(--error)" }}>-${comision.toLocaleString()}</span>
+              <span style={{ color: "var(--error)" }}>-${comision.toLocaleString()} MXN</span>
             </div>
-            <div className="flex justify-between text-sm font-bold mt-1 pt-1" style={{ borderTop: "1px solid var(--border)" }}>
+            <div className="flex justify-between text-sm font-bold pt-1" style={{ borderTop: "1px solid var(--border)" }}>
               <span style={{ color: "var(--foreground)" }}>Tu recibes</span>
-              <span style={{ color: "var(--success)" }}>${recibes.toLocaleString()}</span>
+              <span style={{ color: "var(--success)" }}>${recibes.toLocaleString()} MXN</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Categoria */}
+      {/* ── Categoria ── */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Categoria</label>
+        <label className="block text-xs font-semibold mb-2" style={{ color: "var(--foreground)" }}>Categoria *</label>
         <div className="flex flex-wrap gap-2">
           {CATEGORIAS.map(c => (
-            <button key={c} onClick={() => setCategoria(c)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: categoria === c ? "var(--primary)" : "var(--muted)", color: categoria === c ? "white" : "var(--muted-foreground)" }}>
-              {c}
-            </button>
+            <button key={c} onClick={() => setCategoria(c)} style={chip(categoria === c)}>{c}</button>
           ))}
         </div>
       </div>
 
-      {/* Talla */}
+      {/* ── Talla ── */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Talla</label>
+        <label className="block text-xs font-semibold mb-2" style={{ color: "var(--foreground)" }}>Talla *</label>
         <div className="flex flex-wrap gap-2">
           {TALLAS.map(t => (
-            <button key={t} onClick={() => setTalla(t)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: talla === t ? "var(--primary)" : "var(--muted)", color: talla === t ? "white" : "var(--muted-foreground)" }}>
-              {t}
-            </button>
+            <button key={t} onClick={() => setTalla(t)} style={chip(talla === t)}>{t}</button>
           ))}
         </div>
       </div>
 
-      {/* Estilo */}
+      {/* ── Estilo ── */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>
-          Estilo <span style={{ color: "var(--muted-foreground)", fontWeight: 400 }}>(elige 1-2)</span>
+        <label className="block text-xs font-semibold mb-2" style={{ color: "var(--foreground)" }}>
+          Estilo <span style={{ color: "var(--muted-foreground)", fontWeight: 400 }}>(max 2)</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {ESTILOS.map(e => (
-            <button key={e} onClick={() => setEstilo(e)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: estilo === e ? "var(--accent)" : "var(--muted)", color: estilo === e ? "var(--accent-foreground)" : "var(--muted-foreground)" }}>
-              {e}
-            </button>
+            <button key={e} onClick={() => toggleEstilo(e)} style={chip(estilos.includes(e))}>{e}</button>
           ))}
         </div>
       </div>
 
-      {/* Estado */}
-      <div className="mb-4">
-        <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--foreground)" }}>Estado de la prenda</label>
+      {/* ── Estado ── */}
+      <div className="mb-5">
+        <label className="block text-xs font-semibold mb-2" style={{ color: "var(--foreground)" }}>Estado *</label>
         <div className="flex flex-wrap gap-2">
           {ESTADOS.map(e => (
             <button key={e} onClick={() => setEstado(e)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: estado === e ? "var(--success-light)" : "var(--muted)", color: estado === e ? "var(--success)" : "var(--muted-foreground)" }}>
+              style={chip(estado === e, estado === e ? "var(--success)" : undefined)}>
               {estado === e && <IconCheck size={10} className="inline mr-1" />}{e}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Medidas info */}
+      {/* ── Info envio ── */}
       <div className="mb-5 p-3 rounded-2xl flex items-center gap-3" style={{ background: "var(--muted)", border: "1px solid var(--border)" }}>
-        <IconRuler size={24} style={{ color: "var(--primary)" }} />
+        <IconPackage size={22} style={{ color: "var(--primary)" }} />
         <div>
-          <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>Agrega medidas exactas</p>
-          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Busto, cintura, largo... mas ventas y menos devoluciones</p>
+          <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>Envio gestionado por Xochic</p>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Al venderse generamos tu guia de envio. La compradora paga el envio.</p>
         </div>
       </div>
 
-      {/* Envio info */}
-      <div className="mb-5 p-3 rounded-2xl flex items-center gap-3" style={{ background: "var(--muted)", border: "1px solid var(--border)" }}>
-        <IconPackage size={24} style={{ color: "var(--primary)" }} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>Envio incluido</p>
-          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Generamos tu guia de envio al venderse. Compradora paga el envio.</p>
-        </div>
-      </div>
-
-      {/* Publish */}
-      <button
-        className="w-full py-4 rounded-2xl font-bold text-base"
-        style={{ background: titulo && precio && categoria ? "var(--primary)" : "var(--muted)", color: titulo && precio && categoria ? "white" : "var(--muted-foreground)" }}>
-        Publicar prenda
+      {/* ── Publicar ── */}
+      <button onClick={handlePublish} disabled={uploading || !titulo || !precio || !categoria || !estado || !talla}
+        className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
+        style={{
+          background: titulo && precio && categoria && estado && talla ? "var(--primary)" : "var(--muted)",
+          color: titulo && precio && categoria && estado && talla ? "white" : "var(--muted-foreground)",
+          opacity: uploading ? 0.8 : 1,
+        }}>
+        {uploading ? <><IconLoader2 size={20} className="animate-spin" /> Subiendo...</> : "Publicar prenda"}
       </button>
     </div>
   );
