@@ -1,58 +1,86 @@
 ﻿import Link from "next/link";
-import { IconHanger, IconSparkles, IconUsers, IconArrowRight } from "@tabler/icons-react";
+import { IconHanger, IconSparkles, IconUsers, IconArrowRight, IconRuler } from "@tabler/icons-react";
+
+const FEATURES = [
+  { icon: IconHanger,   color: "#7B8FC7", label: "Closet virtual con IA",   desc: "Digitaliza tu ropa real y combina outfits" },
+  { icon: IconRuler,    color: "#C4A8D0", label: "Avatar con tus medidas",  desc: "Probate prendas virtualmente antes de comprar" },
+  { icon: IconUsers,    color: "#3BAF76", label: "Comunidad creativa",      desc: "Disenadoras locales, moda a la medida" },
+  { icon: IconSparkles, color: "#F59E0B", label: "Estilista IA personal",   desc: "Recomendaciones basadas en tu Style DNA" },
+];
 
 export default function WelcomePage() {
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--background)" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px 24px" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
 
-        {/* Logo */}
-        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
-          style={{ background: "linear-gradient(135deg, var(--primary), var(--accent))", boxShadow: "var(--shadow-lg)" }}>
-          <IconHanger size={40} color="white" />
+      {/* ── Top gradient area ── */}
+      <div style={{
+        background: "linear-gradient(180deg, var(--accent-light) 0%, var(--bg) 100%)",
+        padding: "56px 24px 32px",
+        display: "flex", flexDirection: "column", alignItems: "center",
+      }}>
+        {/* Logo mark */}
+        <div style={{
+          width: 80, height: 80, borderRadius: 24,
+          background: "linear-gradient(135deg, var(--primary), var(--accent))",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          marginBottom: 20, boxShadow: "0 8px 32px rgba(123,143,199,0.35)",
+        }}>
+          <IconHanger size={40} color="white" strokeWidth={1.8} />
         </div>
 
-        <h1 className="text-4xl font-bold mb-2 text-center"
-          style={{ background: "linear-gradient(135deg, var(--primary), var(--accent))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+        <h1 className="text-brand" style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-0.04em", marginBottom: 8 }}>
           Xochic
         </h1>
-        <p className="text-center text-sm mb-8" style={{ color: "var(--muted-foreground)", maxWidth: 280 }}>
+        <p style={{ textAlign: "center", color: "var(--muted-fg)", fontSize: "1rem", maxWidth: 260, lineHeight: 1.5 }}>
           Moda sostenible, closet virtual y comunidad creativa
         </p>
+      </div>
 
-        {/* Features */}
-        <div className="w-full space-y-3 mb-10" style={{ maxWidth: 340 }}>
-          {[
-            { icon: IconHanger,   text: "Closet virtual con IA — digitaliza tu ropa real" },
-            { icon: IconSparkles, text: "Avatar con tus medidas para probarte prendas" },
-            { icon: IconUsers,    text: "Comunidad de diseñadores y moda a la medida" },
-          ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "var(--muted)" }}>
-                <Icon size={20} style={{ color: "var(--primary)" }} />
+      {/* ── Features ── */}
+      <div style={{ padding: "8px 24px 28px", flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360, margin: "0 auto" }}>
+          {FEATURES.map(({ icon: Icon, color, label, desc }) => (
+            <div key={label} style={{
+              display: "flex", alignItems: "flex-start", gap: 14,
+              padding: "14px 16px", borderRadius: "var(--r-lg)",
+              background: "var(--card)", border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-xs)",
+            }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                background: color + "18",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon size={22} style={{ color }} strokeWidth={1.8} />
               </div>
-              <p className="text-sm" style={{ color: "var(--foreground)" }}>{text}</p>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--foreground)", marginBottom: 2 }}>{label}</p>
+                <p style={{ fontSize: "0.78rem", color: "var(--muted-fg)", lineHeight: 1.4 }}>{desc}</p>
+              </div>
             </div>
           ))}
         </div>
-
-        {/* CTAs */}
-        <div className="w-full space-y-3" style={{ maxWidth: 340 }}>
-          <Link href="/registro"
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-base"
-            style={{ background: "var(--primary)", color: "white", textDecoration: "none" }}>
-            Crear cuenta gratis <IconArrowRight size={18} />
-          </Link>
-          <Link href="/login"
-            className="flex items-center justify-center w-full py-3.5 rounded-2xl font-semibold text-base"
-            style={{ background: "transparent", color: "var(--primary)", border: "2px solid var(--primary)", textDecoration: "none" }}>
-            Ya tengo cuenta
-          </Link>
-        </div>
       </div>
-      <p className="text-center text-xs pb-8" style={{ color: "var(--muted-foreground)" }}>
-        Comision solo 8-10% · Moda sostenible · LATAM
-      </p>
+
+      {/* ── CTAs ── */}
+      <div style={{ padding: "0 24px 40px", display: "flex", flexDirection: "column", gap: 12, maxWidth: 360, margin: "0 auto", width: "100%" }}>
+        <Link href="/registro" className="btn btn-primary btn-lg" style={{
+          textDecoration: "none", borderRadius: "var(--r-xl)",
+          background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+          boxShadow: "0 4px 20px rgba(123,143,199,0.4)",
+        }}>
+          Crear cuenta gratis <IconArrowRight size={18} />
+        </Link>
+        <Link href="/login" className="btn btn-outline btn-lg" style={{
+          textDecoration: "none", borderRadius: "var(--r-xl)",
+        }}>
+          Ya tengo cuenta
+        </Link>
+        <p style={{ textAlign: "center", fontSize: "0.72rem", color: "var(--muted-fg)", marginTop: 4 }}>
+          Solo 9% de comision · Moda sostenible · LATAM
+        </p>
+      </div>
+
     </div>
   );
 }

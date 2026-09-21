@@ -17,9 +17,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [router]);
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
       <TopBar />
-      <main className="main-content flex-1">
+      <main style={{ flex: 1, paddingBottom: "calc(72px + env(safe-area-inset-bottom))" }}>
         {children}
       </main>
       <BottomNav />

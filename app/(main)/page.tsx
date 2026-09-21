@@ -1,145 +1,143 @@
-﻿// app/(main)/page.tsx - Home / Feed
-import {
-  IconSparkles,
-  IconHanger,
-  IconRosette,
-  IconScissors,
-  IconFlame,
-} from "@tabler/icons-react";
+﻿import { IconFlame, IconScissors, IconRosette, IconHanger, IconSparkles, IconArrowRight } from "@tabler/icons-react";
+import Link from "next/link";
 
-const categories = [
-  { icon: IconFlame, label: "Trending", color: "#E05252" },
-  { icon: IconScissors, label: "Diseñadores", color: "#7B8FC7" },
-  { icon: IconRosette, label: "Premium", color: "#C4A8D0" },
-  { icon: IconHanger, label: "Segunda mano", color: "#4CAF7D" },
-  { icon: IconSparkles, label: "IA Estilista", color: "#F5A623" },
+const CATS = [
+  { icon: IconFlame,    label: "Trending",      color: "#E05252", bg: "#FCDEDE" },
+  { icon: IconScissors, label: "Disenadoras",   color: "#7B8FC7", bg: "#E4E9F7" },
+  { icon: IconRosette,  label: "Premium",       color: "#C4A8D0", bg: "#EDE4F4" },
+  { icon: IconHanger,   label: "Segunda mano",  color: "#3BAF76", bg: "#D2F0E3" },
+  { icon: IconSparkles, label: "IA Estilista",  color: "#F59E0B", bg: "#FEF3C7" },
 ];
 
-const mockPrendas = [
-  { id: 1, titulo: "Vestido floral boho", precio: 480, talla: "M", estilo: "Boho Free", vendedora: "@luna.style", imagen: null, estado: "Excelente" },
-  { id: 2, titulo: "Blazer oversized crema", precio: 650, talla: "S", estilo: "Minimal Clean", vendedora: "@moda.circular", imagen: null, estado: "Como nuevo" },
-  { id: 3, titulo: "Falda midi de mezclilla", precio: 320, talla: "28", estilo: "Y2K Revival", vendedora: "@itzel.closet", imagen: null, estado: "Buen estado" },
-  { id: 4, titulo: "Blusa bordada artesanal", precio: 890, talla: "Única", estilo: "Artesanal MX", vendedora: "@oacaxaca.moda", imagen: null, estado: "Nueva" },
+const PRENDAS = [
+  { id: "1", titulo: "Vestido floral boho",     precio: 480,  talla: "M",  estilo: "Boho",        vendedora: "@luna.style",    estado: "Excelente",  color: "#C4A8D0" },
+  { id: "2", titulo: "Blazer oversized crema",  precio: 650,  talla: "S",  estilo: "Minimal",     vendedora: "@moda.circular", estado: "Como nuevo", color: "#A4B4DC" },
+  { id: "3", titulo: "Falda midi mezclilla",    precio: 320,  talla: "28", estilo: "Y2K",         vendedora: "@itzel.closet",  estado: "Buen estado",color: "#F0A0B5" },
+  { id: "4", titulo: "Blusa bordada artesanal", precio: 890,  talla: "S",  estilo: "Artesanal MX",vendedora: "@oaxaca.moda",   estado: "Nueva",      color: "#9DC49D" },
 ];
-
-const estiloBadgeColors: Record<string, string> = {
-  "Boho Free": "#C4A8D0",
-  "Minimal Clean": "#A4B4DC",
-  "Y2K Revival": "#F0A0B5",
-  "Artesanal MX": "#9DC49D",
-};
 
 export default function HomePage() {
   return (
-    <div style={{ padding: "0 0 16px 0" }}>
+    <div className="page-content" style={{ paddingTop: 16 }}>
 
-      {/* Hero banner */}
-      <div
-        className="mx-4 mt-4 rounded-2xl p-5 relative overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
-          minHeight: 140,
-        }}
-      >
-        <div
-          className="absolute right-0 top-0 w-32 h-32 rounded-full opacity-20"
-          style={{ background: "white", transform: "translate(30%, -30%)" }}
-        />
-        <p className="text-white text-xs font-medium mb-1 opacity-90">Tu Style DNA: Cottagecore + Artesanal</p>
-        <h2 className="text-white text-xl font-bold leading-tight mb-3">
-          Prendas nuevas<br />que te esperan ✨
+      {/* ── Hero Banner ── */}
+      <div style={{
+        borderRadius: "var(--r-xl)",
+        background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+        padding: "24px 20px",
+        marginBottom: 24,
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative circles */}
+        <div style={{ position: "absolute", width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.1)", top: -30, right: -20 }} />
+        <div style={{ position: "absolute", width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.08)", bottom: -20, right: 40 }} />
+
+        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.75rem", fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Tu Style DNA: Cottagecore + Artesanal
+        </p>
+        <h2 style={{ color: "white", fontSize: "1.5rem", fontWeight: 800, lineHeight: 1.2, marginBottom: 16, letterSpacing: "-0.02em" }}>
+          Nuevas prendas<br />te esperan hoy
         </h2>
-        <button
-          className="text-sm font-semibold px-4 py-2 rounded-full"
-          style={{ background: "white", color: "var(--primary)" }}
-        >
-          Ver mi feed
-        </button>
+        <Link href="/explorar" style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "white", color: "var(--primary)",
+          padding: "10px 18px", borderRadius: "var(--r-full)",
+          fontWeight: 700, fontSize: "0.85rem", textDecoration: "none",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+        }}>
+          Ver mi feed <IconArrowRight size={15} />
+        </Link>
       </div>
 
-      {/* Categories scroll */}
-      <div className="mt-5 mb-1 px-4">
-        <h3 className="font-semibold text-sm mb-3" style={{ color: "var(--foreground)" }}>
-          Explorar por categoría
-        </h3>
-      </div>
-      <div className="flex gap-3 px-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-        {categories.map(({ icon: Icon, label, color }) => (
-          <button
-            key={label}
-            className="flex flex-col items-center gap-2 flex-shrink-0"
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center"
-              style={{ background: color + "22", border: `1.5px solid ${color}44` }}
-            >
-              <Icon size={24} style={{ color }} />
-            </div>
-            <span className="text-xs font-medium" style={{ color: "var(--foreground)", whiteSpace: "nowrap" }}>
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Prendas grid */}
-      <div className="px-4 mt-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm" style={{ color: "var(--foreground)" }}>
-            Para ti · basado en tu DNA
-          </h3>
-          <button className="text-xs font-medium" style={{ color: "var(--primary)" }}>
-            Ver todo
-          </button>
+      {/* ── Categories ── */}
+      <div style={{ marginBottom: 28 }}>
+        <div className="section-header">
+          <h3>Categorias</h3>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {mockPrendas.map((prenda) => (
-            <div
-              key={prenda.id}
-              className="rounded-2xl overflow-hidden"
-              style={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                boxShadow: "var(--shadow-sm)",
-              }}
-            >
-              {/* Imagen placeholder */}
-              <div
-                className="w-full flex items-center justify-center"
-                style={{
-                  height: 160,
-                  background: "linear-gradient(135deg, var(--muted), var(--border))",
-                }}
-              >
-                <IconHanger size={40} style={{ color: "var(--muted-foreground)", opacity: 0.4 }} />
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+          {CATS.map(({ icon: Icon, label, color, bg }) => (
+            <Link key={label} href="/explorar" style={{
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              flexShrink: 0, textDecoration: "none",
+            }}>
+              <div style={{
+                width: 58, height: 58, borderRadius: "var(--r-lg)",
+                background: bg, display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 2px 12px ${color}30`,
+              }}>
+                <Icon size={26} style={{ color }} />
               </div>
-              {/* Info */}
-              <div className="p-3">
-                <span
-                  className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-2"
-                  style={{
-                    background: (estiloBadgeColors[prenda.estilo] || "var(--primary)") + "22",
-                    color: estiloBadgeColors[prenda.estilo] || "var(--primary)",
-                  }}
-                >
-                  {prenda.estilo}
-                </span>
-                <p className="text-sm font-semibold leading-tight mb-1" style={{ color: "var(--foreground)" }}>
-                  {prenda.titulo}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-bold" style={{ color: "var(--primary)" }}>
-                    ${prenda.precio}
-                  </span>
-                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    T. {prenda.talla}
+              <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--foreground-soft)", whiteSpace: "nowrap" }}>
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Promo strip ── */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
+        padding: "12px 16px", borderRadius: "var(--r-md)",
+        background: "var(--accent-light)", border: "1px solid var(--accent)",
+        marginBottom: 28,
+      }}>
+        <IconSparkles size={18} style={{ color: "var(--primary)", flexShrink: 0 }} />
+        <p style={{ fontSize: "0.8rem", color: "var(--accent-fg)", fontWeight: 500 }}>
+          <strong>9% de comision</strong> — vs 19% de Trendier. Tu ganas mas con Xochic.
+        </p>
+      </div>
+
+      {/* ── Feed prendas ── */}
+      <div>
+        <div className="section-header">
+          <h3>Para ti · segun tu DNA</h3>
+          <Link href="/explorar">Ver todo</Link>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          {PRENDAS.map((p) => (
+            <Link key={p.id} href={`/explorar/${p.id}`} style={{ textDecoration: "none" }}>
+              <div className="card card-hover" style={{ borderRadius: "var(--r-lg)" }}>
+                {/* Image placeholder */}
+                <div style={{
+                  height: 170, background: `${p.color}28`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  position: "relative",
+                }}>
+                  <IconHanger size={44} style={{ color: p.color, opacity: 0.5 }} />
+                  {/* Talla badge */}
+                  <span style={{
+                    position: "absolute", top: 8, left: 8,
+                    background: "rgba(255,255,255,0.92)", backdropFilter: "blur(4px)",
+                    padding: "3px 9px", borderRadius: "var(--r-full)",
+                    fontSize: "0.7rem", fontWeight: 700, color: "var(--foreground)",
+                  }}>
+                    T.{p.talla}
                   </span>
                 </div>
-                <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
-                  {prenda.vendedora} · {prenda.estado}
-                </p>
+                {/* Info */}
+                <div style={{ padding: "10px 12px 12px" }}>
+                  <span style={{
+                    display: "inline-block",
+                    fontSize: "0.65rem", fontWeight: 700,
+                    color: p.color, background: `${p.color}20`,
+                    padding: "2px 8px", borderRadius: "var(--r-full)",
+                    marginBottom: 6,
+                  }}>
+                    {p.estilo}
+                  </span>
+                  <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--foreground)", lineHeight: 1.3, marginBottom: 8 }}>
+                    {p.titulo}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span className="text-price">${p.precio.toLocaleString()}</span>
+                    <span style={{ fontSize: "0.7rem", color: "var(--muted-fg)" }}>{p.estado}</span>
+                  </div>
+                  <p style={{ fontSize: "0.7rem", color: "var(--muted-fg)", marginTop: 4 }}>{p.vendedora}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
