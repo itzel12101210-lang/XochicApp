@@ -5,7 +5,7 @@ import {
   IconCamera, IconPackage, IconCheck, IconX, IconLoader2,
 } from "@tabler/icons-react";
 import { useAuth }      from "@/hooks/useAuth";
-import { uploadFiles }  from "@/lib/storage";
+import { uploadFiles }  from "@/lib/upload";
 import { crearPrenda }  from "@/lib/prendas";
 import Image            from "next/image";
 
